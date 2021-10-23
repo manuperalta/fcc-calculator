@@ -1,8 +1,6 @@
 import { NUMBERS, OPERATIONS, SYMBOLS } from "./numbops.js";
 import React from "react";
 export default function TileSets(props) {
-  console.log(props.input);
-
   let numbTileSet = NUMBERS.map((x, i) => (
     <NumTile
       id={x}
@@ -67,11 +65,8 @@ function OpTile(props) {
   let symbol = props.symbol;
   let input = props.input;
   let setInput = props.setInput;
-  let regex = /([/*\-+])$/;
   let handleClick = () => {
-    if (input === "0") return;
-    if (regex.test(input)) setInput(input.slice(0, input.length - 1) + symbol);
-    //prevents writing more than one operation in a row. any new operation replaces the previous one.
+    if (input === "0" || input[input.length - 1] === symbol) return;
     else setInput(input + symbol);
   };
   return (
@@ -85,7 +80,6 @@ function Decimal(props) {
   let setInput = props.setInput;
   let regex = /[0-9]*\.[0-9]*$/g;
   let currentNumber = input.match(regex);
-  console.log(currentNumber);
   let handleClick = () => {
     if (currentNumber === null && !input.match(/[+\-*/]$/))
       // avoids putting decimals in numbers that already have one, and next to any operation sign.
@@ -103,25 +97,31 @@ function Equals(props) {
   let input = props.input;
   let setInput = props.setInput;
   let setTotal = props.setTotal;
-  let numRegex = /-*[0-9]+\.{0,1}[0-9]*/g;
+  let numRegex = /-{0,1}[0-9]+\.{0,1}[0-9]*/g;
   let numVector = input.match(numRegex).map((x) => Number(x));
-  let opRegex = /[+\-*/]/g;
+  let opRegex = /[+\-*/]+/g;
   let opVector = input.match(opRegex);
-  let allRegex = /[+\-*/]|[0-9]+\.{0,1}[0-9]*/g;
-  let diffSplit = input.match(allRegex);
-  console.log(diffSplit);
-  console.log(numVector);
   let handleClick = () => {
-    if (opVector === null || numVector === null) {
-      return setTotal(input);
-    }
+    if (opVector === null || numVector === null) return setTotal(input);
     if (opVector[0] === "-" && numVector[0] < 0) opVector.shift();
-    if (opVector.length === numVector.length) opVector.pop();
-    console.log(numVector);
+    if (/[+\-*/]+$/.test(input)) opVector.pop();
+
     //since operations are always in-between numbers,
     //there should always be one less operations than there are numbers.
     //ex 30 + 12 - 44 * 2 : 4 numbers, 3 operations
+
     for (let i = 0; i < opVector.length; i++) {
+      console.log(opVector[i].length);
+      if (opVector[i].length > 2)
+        opVector[i] = opVector[i].match(/[+\-*/]{2}$/)[0];
+      console.log(opVector[i], opVector[i].length);
+      if (opVector[i].length === 2) {
+        console.log("inside");
+        if (opVector[i][1] === "-") {
+          opVector[i] = opVector[i][0];
+        } else opVector[i] = opVector[i].match(/[+\-*/]$/)[0];
+      }
+      console.log(opVector[i]);
       switch (opVector[i]) {
         case "*":
           numVector[i] = numVector[i] * numVector[i + 1];
@@ -141,7 +141,7 @@ function Equals(props) {
     } //division and multiplication go first
     //this algo removes the two numbers it operates on from the array of numbers numVector
     //and then puts the result of that operation in the same location
-    console.log(numVector);
+
     for (let i = 0; i < opVector.length; i++) {
       if (opVector[i] === "+" || opVector[i] === "-") {
         //both cases are the same because in subtractions, the number added is already a negative in the array numVector.
@@ -152,7 +152,6 @@ function Equals(props) {
       }
     } //additions and subtractions go last
     //same algorithm as the one above, just for adding and subtracting.
-    console.log(numVector);
 
     setInput(numVector[0].toString());
     setTotal(numVector[0].toString());
