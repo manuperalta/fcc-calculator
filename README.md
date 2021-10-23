@@ -1,3 +1,2 @@
 # fcc-calculator
-Created with CodeSandbox
-Formula Logic Calculator for FreeCodeCamp certificate.
+Created with CodeSandbox.
