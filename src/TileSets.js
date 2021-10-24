@@ -48,10 +48,10 @@ function NumTile(props) {
   let input = props.input;
   let setInput = props.setInput;
   let number = props.number;
-  let regex = /[+\-*/]$/;
+  let endsWithOperation = /[+\-*/]$/;
   let handleClick = () => {
     if (input === "0") return setInput(number);
-    if (number === "0" && regex.test(input)) return; //prevents writing more than one zero immediately after an operation
+    if (number === "0" && endsWithOperation.test(input)) return; //prevents writing more than one zero immediately after an operation
     return setInput(input + number);
   };
 
@@ -99,8 +99,11 @@ function Equals(props) {
   let setTotal = props.setTotal;
   let numRegex = /-{0,1}[0-9]+\.{0,1}[0-9]*/g;
   let numVector = input.match(numRegex).map((x) => Number(x));
+  //this creates an array containing every number,
+  //accounting for negative numbers.
   let opRegex = /[+\-*/]+/g;
   let opVector = input.match(opRegex);
+  //this makes an array containing every operation
   let handleClick = () => {
     if (opVector === null || numVector === null) return setTotal(input);
     if (opVector[0] === "-" && numVector[0] < 0) opVector.shift();
@@ -109,19 +112,16 @@ function Equals(props) {
     //since operations are always in-between numbers,
     //there should always be one less operations than there are numbers.
     //ex 30 + 12 - 44 * 2 : 4 numbers, 3 operations
+    //this means operation[i] will always operate between number[i] and number[i+1].
 
     for (let i = 0; i < opVector.length; i++) {
-      console.log(opVector[i].length);
       if (opVector[i].length > 2)
         opVector[i] = opVector[i].match(/[+\-*/]{2}$/)[0];
-      console.log(opVector[i], opVector[i].length);
       if (opVector[i].length === 2) {
-        console.log("inside");
         if (opVector[i][1] === "-") {
           opVector[i] = opVector[i][0];
         } else opVector[i] = opVector[i].match(/[+\-*/]$/)[0];
       }
-      console.log(opVector[i]);
       switch (opVector[i]) {
         case "*":
           numVector[i] = numVector[i] * numVector[i + 1];
@@ -139,12 +139,12 @@ function Equals(props) {
           break;
       }
     } //division and multiplication go first
-    //this algo removes the two numbers it operates on from the array of numbers numVector
+    //this algo removes the two numbers it operates on from numVector
     //and then puts the result of that operation in the same location
 
     for (let i = 0; i < opVector.length; i++) {
       if (opVector[i] === "+" || opVector[i] === "-") {
-        //both cases are the same because in subtractions, the number added is already a negative in the array numVector.
+        //both cases are the same because in subtractions, the number added is already a negative in numVector.
         numVector[i] = numVector[i] + numVector[i + 1];
         numVector.splice(i + 1, 1);
         opVector.splice(i, 1);
